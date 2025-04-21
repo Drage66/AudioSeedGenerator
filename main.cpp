@@ -212,14 +212,16 @@ int main(void)
         }
 
 
+        int dataSize = 60000 + bufferFrame;
+
         {
             ImGui::Begin("Spectograph");
             if (ImPlot::BeginPlot("Spectograph"))
             {
-                int x_data[30000];
-                int sampleSegment[30000];
+                int x_data[dataSize];
+                int sampleSegment[dataSize];
 
-                for (int i = 0; i < 30000; i++)
+                for (int i = 0; i < dataSize; i++)
                 {
                     x_data[i] = i;
                     sampleSegment[i] = buffer.getSamples()[i];
@@ -227,7 +229,7 @@ int main(void)
                     // std::cout << sampleSegment << std::endl;
                 }
 
-                ImPlot::PlotLine("Line",x_data,sampleSegment,30000);
+                ImPlot::PlotLine("Line",x_data,sampleSegment,dataSize);
                 ImPlot::EndPlot();
             }
             ImGui::End();
