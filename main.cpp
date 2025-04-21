@@ -36,25 +36,6 @@ void bufferSamplesToCSV(sf::SoundBuffer buffer)
     csv.close();
 }
 
-void bufferToSegment(sf::SoundBuffer buffer)
-{
-    const std::int16_t* samplesArray = buffer.getSamples();
-    std::size_t index = 0;
-    int bufferRangeMin = 0;
-    int bufferRangeMax = 512;
-
-    for (; bufferRangeMin > 0 && bufferRangeMax < 512; index++)
-    {
-        std::cout << index << ": " << samplesArray[index] << std::endl;
-        // arrayCopy[i] = samplesArray[i];
-    }
-
-    if (index < buffer.getSampleCount())
-    {
-        index = buffer.getSampleCount();
-
-    }
-}
 
 float floatToMinutes(float secondsAsFloat)
 {
@@ -88,7 +69,7 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
 
 int main(void)
 {
-    sf::SoundBuffer buffer("sstv.wav");
+    sf::SoundBuffer buffer("September.wav");
     sf::Sound sound(buffer);
 
     displaySoundInformation(buffer);
@@ -154,6 +135,8 @@ int main(void)
     myimgui.Init(window);
     ImPlot::CreateContext();
 
+    int bufferFrame = 0;
+
 
     // Loop until the user closes window
     // Render Loop
@@ -206,6 +189,7 @@ int main(void)
 
             if (is_playing)
             {
+                bufferFrame++;
                 sound.play();
                 clock.start();
                 if (ImGui::Button("Pause", button_size))
@@ -227,24 +211,51 @@ int main(void)
             ImGui::End();
         }
 
-        {
-            int x_data[4800];
-            for (int i = 0; i < 4800; i++)
-            {
-                x_data[i] = i;
-            }
 
-            ImGui::Begin("Spectorgraph");
+        {
+            ImGui::Begin("Spectograph");
             if (ImPlot::BeginPlot("Spectograph"))
             {
+                int x_data[30000];
+                int sampleSegment[30000];
 
-                ImPlot::PlotLine("Line",x_data,sampleSegment,4800);
+                for (int i = 0; i < 30000; i++)
+                {
+                    x_data[i] = i;
+                    sampleSegment[i] = buffer.getSamples()[i];
+                    // std::cout << "i: " << i << '\t' << "samples: " << sampleSegment[i] << std::endl;
+                    // std::cout << sampleSegment << std::endl;
+                }
+
+                ImPlot::PlotLine("Line",x_data,sampleSegment,30000);
                 ImPlot::EndPlot();
             }
             ImGui::End();
 
         }
 
+
+        // {
+        //     // TODO: To Fix
+        //     // Render Spectograph RT
+        //     ImGui::Begin("Spectograph");
+        //     if (ImPlot::BeginPlot("Spectograph"))
+        //     {
+        //         int x_data[bufferFrame];
+        //         int sampleSegment[bufferFrame];
+        //
+        //         for (int i = 0; i < bufferFrame; i++)
+        //         {
+        //             x_data[i] = i;
+        //             sampleSegment[i] = buffer.getSamples()[i];
+        //             std::cout << "i: " << i << '\t' << "samples: " << sampleSegment[i] << std::endl;
+        //             // std::cout << sampleSegment << std::endl;
+        //         }
+        //         ImPlot::PlotLine("Line",x_data,sampleSegment,bufferFrame);
+        //         ImPlot::EndPlot();
+        //     }
+        //     ImGui::End();
+        // }
 
         // Rendering
         // (Your code clears your framebuffer, renders your other stuff etc.)
