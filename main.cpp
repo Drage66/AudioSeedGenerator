@@ -16,6 +16,33 @@
 #include <iostream>
 #include <iterator>
 
+
+// utility structure for realtime plot
+struct ScrollingBuffer {
+    int MaxSize;
+    int Offset;
+    ImVector<ImVec2> Data;
+    ScrollingBuffer(int max_size = 2000) {
+        MaxSize = max_size;
+        Offset  = 0;
+        Data.reserve(MaxSize);
+    }
+    void AddPoint(float x, float y) {
+        if (Data.size() < MaxSize)
+            Data.push_back(ImVec2(x,y));
+        else {
+            Data[Offset] = ImVec2(x,y);
+            Offset =  (Offset + 1) % MaxSize;
+        }
+    }
+    void Erase() {
+        if (Data.size() > 0) {
+            Data.shrink(0);
+            Offset  = 0;
+        }
+    }
+};
+
 void displaySoundInformation(sf::SoundBuffer buffer)
 {
     std::cout << " " << buffer.getDuration().asSeconds() << " seconds" << '\n'
@@ -69,7 +96,7 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
 
 int main(void)
 {
-    sf::SoundBuffer buffer("September.wav");
+    sf::SoundBuffer buffer("sstv.wav");
     sf::Sound sound(buffer);
 
     displaySoundInformation(buffer);
@@ -135,7 +162,6 @@ int main(void)
     myimgui.Init(window);
     ImPlot::CreateContext();
 
-    int bufferFrame = 0;
 
 
     // Loop until the user closes window
@@ -189,9 +215,9 @@ int main(void)
 
             if (is_playing)
             {
-                bufferFrame++;
                 sound.play();
                 clock.start();
+
                 if (ImGui::Button("Pause", button_size))
                 {
                     is_playing = false;
@@ -212,29 +238,31 @@ int main(void)
         }
 
 
-        int dataSize = 60000 + bufferFrame;
+        //NOTE: index reference table for buffer samples to time using the Samples per second
+        //TODO: Change 4800 value to use the buffer Samples Per Second
+        int index = int(clock.getElapsedTime().asSeconds() * 4800);
+
+        static ScrollingBuffer sdata;
+        sdata.AddPoint(clock.getElapsedTime().asSeconds(), buffer.getSamples()[index]);
 
         {
             ImGui::Begin("Spectograph");
             if (ImPlot::BeginPlot("Spectograph"))
             {
-                int x_data[dataSize];
-                int sampleSegment[dataSize];
 
-                for (int i = 0; i < dataSize; i++)
-                {
-                    x_data[i] = i;
-                    sampleSegment[i] = buffer.getSamples()[i];
-                    // std::cout << "i: " << i << '\t' << "samples: " << sampleSegment[i] << std::endl;
-                    // std::cout << sampleSegment << std::endl;
-                }
-
-                ImPlot::PlotLine("Line",x_data,sampleSegment,dataSize);
+                ImPlot::PlotLine("Line",&sdata.Data[0].x,&sdata.Data[0].y,sdata.Data.size(),0,sdata.Offset,2*sizeof(float));
                 ImPlot::EndPlot();
             }
             ImGui::End();
 
         }
+
+        // for (int i = 0; i < index; i++)
+        // {
+        //     std::cout << i << ": " << buffer.getSamples()[i] << std::endl;
+        // }
+
+        // ImPlot::ShowDemoWindow();
 
 
         // {
