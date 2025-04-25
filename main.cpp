@@ -128,6 +128,11 @@ int main(void)
     clock.reset();
     clock.stop();
 
+
+    static int index = 0;
+    static ScrollingBuffer sdata;
+    sdata.AddPoint(clock.getElapsedTime().asSeconds(), buffer.getSamples()[index]);
+
     float durationSeconds = buffer.getDuration().asSeconds();
 
     // std::cout << durationFull;
@@ -240,23 +245,36 @@ int main(void)
 
         //NOTE: index reference table for buffer samples to time using the Samples per second
         //TODO: Change 4800 value to use the buffer Samples Per Second
-        int index = int(clock.getElapsedTime().asSeconds() * 4800);
+        index = int(clock.getElapsedTime().asSeconds() * 4800);
 
-        static ScrollingBuffer sdata;
-        sdata.AddPoint(clock.getElapsedTime().asSeconds(), buffer.getSamples()[index]);
+        const int spacing = 20'000;
+        if (is_playing)
+        {
+            sdata.AddPoint(clock.getElapsedTime().asSeconds() * spacing, buffer.getSamples()[index]);
+        }
 
+        static float history = 15.0f;
         {
             ImGui::Begin("Spectograph");
             if (ImPlot::BeginPlot("Spectograph"))
             {
-
+                // ImPlot::SetupAxes(nullptr, nullptr, ImPlotAxisFlags_NoTickLabels,ImPlotAxisFlags_NoTickLabels );
+                ImPlot::SetupAxisLimits(ImAxis_X1,clock.getElapsedTime().asSeconds() * spacing - history * spacing, clock.getElapsedTime().asSeconds() * spacing, ImGuiCond_Always);
+                ImPlot::SetupAxisLimits(ImAxis_Y1,-50'000,50'000,ImGuiCond_Always);
+                ImPlot::SetNextMarkerStyle(ImPlotMarker_Circle);
                 ImPlot::PlotLine("Line",&sdata.Data[0].x,&sdata.Data[0].y,sdata.Data.size(),0,sdata.Offset,2*sizeof(float));
                 ImPlot::EndPlot();
             }
+
+
+            ImGui::Text("Time: %f", clock.getElapsedTime().asSeconds());
+            ImGui::Text("Index: %i", index);
+            ImGui::Text("Current Data: %i", buffer.getSamples()[index]);
+
             ImGui::End();
 
         }
-
+        ImPlot::ShowDemoWindow();
         // for (int i = 0; i < index; i++)
         // {
         //     std::cout << i << ": " << buffer.getSamples()[i] << std::endl;
