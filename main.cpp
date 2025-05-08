@@ -17,6 +17,13 @@
 #include <iterator>
 
 
+void StyleCustom()
+{
+    ImPlotStyle& style = ImPlot::GetStyle();
+    ImVec4* colors = style.Colors;
+    style.MajorGridSize = style.MinorGridSize;
+}
+
 // utility structure for realtime plot
 struct ScrollingBuffer {
     int MaxSize;
@@ -168,6 +175,7 @@ int main(void)
     ImPlot::CreateContext();
 
 
+    static float history = 15.0f;
 
     // Loop until the user closes window
     // Render Loop
@@ -198,6 +206,8 @@ int main(void)
             ImGui::Begin("Hello, world!",__null,1|2|4|128);
 
             ImGui::SameLine(250.0);
+            // TODO: Parse info as a string and then remove the decimal '.' and replace with ':' to display time format
+            // Also add if for if the time is less 10 seconds it shows a 0 in front of the values so 02:30 and not 2:30
             ImGui::Text("%.2f", floatToMinutes(elapsedTimeSeconds));
             // XXX: DO NOT TOUCH SLIDER, we just need it to visualize progress
             // NOTE: Slider Flags:
@@ -205,6 +215,7 @@ int main(void)
 
             // NOTE: %% will write a single % to the stream. Cants use escape character \ for % sign :(
             ImGui::SliderFloat(" ", &percentOfDuration, 0.0f,100.0f,"%.2f %%",16);
+            ImGui::SliderFloat("History", &history, -20.0f, 20.0f);
             ImGui::NewLine();
             ImGui::SameLine(200.0);
 
@@ -253,15 +264,17 @@ int main(void)
             sdata.AddPoint(clock.getElapsedTime().asSeconds() * spacing, buffer.getSamples()[index]);
         }
 
-        static float history = 15.0f;
         {
             ImGui::Begin("Spectograph");
+
+
             if (ImPlot::BeginPlot("Spectograph"))
             {
                 // ImPlot::SetupAxes(nullptr, nullptr, ImPlotAxisFlags_NoTickLabels,ImPlotAxisFlags_NoTickLabels );
-                ImPlot::SetupAxisLimits(ImAxis_X1,clock.getElapsedTime().asSeconds() * spacing - history * spacing, clock.getElapsedTime().asSeconds() * spacing, ImGuiCond_Always);
+                ImPlot::SetupAxes(nullptr, nullptr,ImPlotAxisFlags_NoDecorations,ImPlotAxisFlags_NoDecorations);
+                ImPlot::SetupAxisLimits(ImAxis_X1,( ( clock.getElapsedTime().asSeconds() * spacing ) - ( history * spacing ) ), clock.getElapsedTime().asSeconds() * spacing, ImGuiCond_Always);
                 ImPlot::SetupAxisLimits(ImAxis_Y1,-50'000,50'000,ImGuiCond_Always);
-                ImPlot::SetNextMarkerStyle(ImPlotMarker_Circle);
+                // ImPlot::SetNextMarkerStyle(ImPlotMarker_Circle);
                 ImPlot::PlotLine("Line",&sdata.Data[0].x,&sdata.Data[0].y,sdata.Data.size(),0,sdata.Offset,2*sizeof(float));
                 ImPlot::EndPlot();
             }
