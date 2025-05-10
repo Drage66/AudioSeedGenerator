@@ -15,6 +15,7 @@
 #include <iomanip>
 #include <iostream>
 #include <iterator>
+#include <ostream>
 
 
 void StyleCustom()
@@ -101,6 +102,19 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
     }
 }
 
+static int window_width = 1280;
+static int window_height = 720;
+ImVec2 window_pos = ImVec2(1280,720);
+
+void framebuffer_size_callback(GLFWwindow* window, int width, int height)
+{
+    window_pos = ImVec2(width, height);
+    glViewport(0,0,width,height);
+
+    //TODO: use framebuffer_size callback to edit the global variable for window width and window height. So the timeline can be constantly positioned in the bottom center of the screen
+    std::cout << "(w: " << width << " , h" << height << " )" << std::endl;
+}
+
 int main(void)
 {
     sf::SoundBuffer buffer("sstv.wav");
@@ -157,13 +171,14 @@ int main(void)
     glfwWindowHint(GLFW_OPENGL_PROFILE,GLFW_OPENGL_CORE_PROFILE);
 
     // Create a window and its context
-    GLFWwindow* window = glfwCreateWindow(1280, 720, "My window", NULL, NULL);
+    GLFWwindow* window = glfwCreateWindow(window_width, window_height, "My window", NULL, NULL);
     if (!window)
     {
         glfwTerminate();
         return -1;
     }
     glfwSetKeyCallback(window, key_callback);
+    glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
     // Make the windows context current
     glfwMakeContextCurrent(window);
     glfwSwapInterval(1); // Enable Vsync
@@ -191,6 +206,7 @@ int main(void)
         // Populates myimgui frame
         // myimgui.Update();
         {
+
             ImVec2 windowSize = ImVec2(400,400);
             ImVec2 button_size = ImVec2(100,100);
 
@@ -203,7 +219,9 @@ int main(void)
             //              NoResize = 2
             //              NoMove = 4
             //              NoBackground = 128
-            ImGui::Begin("Hello, world!",__null,1|2|4|128);
+            ImGui::Begin("TimeLine",__null,1|2|4|128);
+            ImGui::SetWindowSize(windowSize);
+            ImGui::SetWindowPos(ImVec2(window_pos.x/2.0 - windowSize.x/2.0, window_pos.y - windowSize.y/2.0));
 
             ImGui::SameLine(250.0);
             // TODO: Parse info as a string and then remove the decimal '.' and replace with ':' to display time format
