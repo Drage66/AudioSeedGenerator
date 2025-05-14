@@ -20,9 +20,51 @@
 
 void StyleCustom()
 {
-    ImPlotStyle& style = ImPlot::GetStyle();
-    ImVec4* colors = style.Colors;
-    style.MajorGridSize = style.MinorGridSize;
+    ImGuiStyle& style = ImGui::GetStyle();
+
+    style.Alpha = 1.0;
+    style.WindowRounding = 3;
+    style.GrabRounding = 1;
+    style.GrabMinSize = 20;
+    style.FrameRounding = 3;
+
+    style.Colors[ImGuiCol_Text]                  = ImVec4(0.86f, 0.93f, 0.89f, 0.78f);
+    style.Colors[ImGuiCol_TextDisabled]          = ImVec4(0.86f, 0.93f, 0.89f, 0.28f);
+    style.Colors[ImGuiCol_WindowBg]              = ImVec4(0.13f, 0.14f, 0.17f, 1.00f);
+    style.Colors[ImGuiCol_Border]                = ImVec4(0.31f, 0.31f, 1.00f, 0.00f);
+    style.Colors[ImGuiCol_BorderShadow]          = ImVec4(0.00f, 0.00f, 0.00f, 0.00f);
+    style.Colors[ImGuiCol_FrameBg]               = ImVec4(0.20f, 0.22f, 0.27f, 1.00f);
+    style.Colors[ImGuiCol_FrameBgHovered]        = ImVec4(0.92f, 0.18f, 0.29f, 0.78f);
+    style.Colors[ImGuiCol_FrameBgActive]         = ImVec4(0.92f, 0.18f, 0.29f, 1.00f);
+    style.Colors[ImGuiCol_TitleBg]               = ImVec4(0.20f, 0.22f, 0.27f, 1.00f);
+    style.Colors[ImGuiCol_TitleBgCollapsed]      = ImVec4(0.20f, 0.22f, 0.27f, 0.75f);
+    style.Colors[ImGuiCol_TitleBgActive]         = ImVec4(0.92f, 0.18f, 0.29f, 1.00f);
+    style.Colors[ImGuiCol_MenuBarBg]             = ImVec4(0.20f, 0.22f, 0.27f, 0.47f);
+    style.Colors[ImGuiCol_ScrollbarBg]           = ImVec4(0.20f, 0.22f, 0.27f, 1.00f);
+    style.Colors[ImGuiCol_ScrollbarGrab]         = ImVec4(0.09f, 0.15f, 0.16f, 1.00f);
+    style.Colors[ImGuiCol_ScrollbarGrabHovered]  = ImVec4(0.92f, 0.18f, 0.29f, 0.78f);
+    style.Colors[ImGuiCol_ScrollbarGrabActive]   = ImVec4(0.92f, 0.18f, 0.29f, 1.00f);
+    style.Colors[ImGuiCol_CheckMark]             = ImVec4(0.71f, 0.22f, 0.27f, 1.00f);
+    style.Colors[ImGuiCol_SliderGrab]            = ImVec4(0.47f, 0.77f, 0.83f, 0.14f);
+    style.Colors[ImGuiCol_SliderGrabActive]      = ImVec4(0.92f, 0.18f, 0.29f, 1.00f);
+    style.Colors[ImGuiCol_Button]                = ImVec4(0.47f, 0.77f, 0.83f, 0.14f);
+    style.Colors[ImGuiCol_ButtonHovered]         = ImVec4(0.92f, 0.18f, 0.29f, 0.86f);
+    style.Colors[ImGuiCol_ButtonActive]          = ImVec4(0.92f, 0.18f, 0.29f, 1.00f);
+    style.Colors[ImGuiCol_Header]                = ImVec4(0.92f, 0.18f, 0.29f, 0.76f);
+    style.Colors[ImGuiCol_HeaderHovered]         = ImVec4(0.92f, 0.18f, 0.29f, 0.86f);
+    style.Colors[ImGuiCol_HeaderActive]          = ImVec4(0.92f, 0.18f, 0.29f, 1.00f);
+    style.Colors[ImGuiCol_Separator]             = ImVec4(0.14f, 0.16f, 0.19f, 1.00f);
+    style.Colors[ImGuiCol_SeparatorHovered]      = ImVec4(0.92f, 0.18f, 0.29f, 0.78f);
+    style.Colors[ImGuiCol_SeparatorActive]       = ImVec4(0.92f, 0.18f, 0.29f, 1.00f);
+    style.Colors[ImGuiCol_ResizeGrip]            = ImVec4(0.47f, 0.77f, 0.83f, 0.04f);
+    style.Colors[ImGuiCol_ResizeGripHovered]     = ImVec4(0.92f, 0.18f, 0.29f, 0.78f);
+    style.Colors[ImGuiCol_ResizeGripActive]      = ImVec4(0.92f, 0.18f, 0.29f, 1.00f);
+    style.Colors[ImGuiCol_PlotLines]             = ImVec4(0.86f, 0.93f, 0.89f, 0.63f);
+    style.Colors[ImGuiCol_PlotLinesHovered]      = ImVec4(0.92f, 0.18f, 0.29f, 1.00f);
+    style.Colors[ImGuiCol_PlotHistogram]         = ImVec4(0.86f, 0.93f, 0.89f, 0.63f);
+    style.Colors[ImGuiCol_PlotHistogramHovered]  = ImVec4(0.92f, 0.18f, 0.29f, 1.00f);
+    style.Colors[ImGuiCol_TextSelectedBg]        = ImVec4(0.92f, 0.18f, 0.29f, 0.43f);
+    style.Colors[ImGuiCol_PopupBg]               = ImVec4(0.20f, 0.22f, 0.27f, 0.9f);
 }
 
 // utility structure for realtime plot
@@ -104,6 +146,7 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
 
 static int window_width = 1280;
 static int window_height = 720;
+
 ImVec2 window_pos = ImVec2(1280,720);
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height)
@@ -111,13 +154,12 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height)
     window_pos = ImVec2(width, height);
     glViewport(0,0,width,height);
 
-    //TODO: use framebuffer_size callback to edit the global variable for window width and window height. So the timeline can be constantly positioned in the bottom center of the screen
     std::cout << "(w: " << width << " , h" << height << " )" << std::endl;
 }
 
 int main(void)
 {
-    sf::SoundBuffer buffer("sstv.wav");
+    sf::SoundBuffer buffer("September.wav");
     sf::Sound sound(buffer);
 
     displaySoundInformation(buffer);
@@ -133,14 +175,22 @@ int main(void)
     // }
 
 
-    // for (std::size_t i = 0; i < buffer.getSampleCount(); i++)
-    // {
-    //     std::cout << samples[i] << std::endl;
-    // }
+    // static int xValues[buffer.getSampleCount];
+    // TODO: Create data points in chunks somehow and plot it to the graph
+    // Or increase the Implot maximum values in the source
+    // Or truncate the data by skipping some of the ddata in intervals to the limit of the max values
+    int size = 500000;
+    std::int32_t xValues[size];
+    std::int32_t yValues[size];
+    for (std::uint32_t i = 0; i < size; i++)
+    {
+        xValues[i] = i;
+        yValues[i] = buffer.getSamples()[i];
+    }
 
     // Setting volume to 50% becuase my ears are still ringing
     sound.setVolume(5.0);
-    ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
+    ImVec4 clear_color = ImVec4(0.14f,0.16f,0.18f,1.00f);
     bool is_playing = false;
 
     // Creating sfml clock variable
@@ -152,7 +202,7 @@ int main(void)
 
     static int index = 0;
     static ScrollingBuffer sdata;
-    sdata.AddPoint(clock.getElapsedTime().asSeconds(), buffer.getSamples()[index]);
+    // sdata.AddPoint(clock.getElapsedTime().asSeconds(), buffer.getSamples()[index]);
 
     float durationSeconds = buffer.getDuration().asSeconds();
 
@@ -190,7 +240,7 @@ int main(void)
     ImPlot::CreateContext();
 
 
-    static float history = 15.0f;
+    static float history = 1.0f;
 
     // Loop until the user closes window
     // Render Loop
@@ -207,8 +257,9 @@ int main(void)
         // myimgui.Update();
         {
 
+
             ImVec2 windowSize = ImVec2(400,400);
-            ImVec2 button_size = ImVec2(100,100);
+            ImVec2 button_size = ImVec2(50,50);
 
             // NOTE:
             // Creating an ImGui frame with ImGui::Begin
@@ -220,6 +271,7 @@ int main(void)
             //              NoMove = 4
             //              NoBackground = 128
             ImGui::Begin("TimeLine",__null,1|2|4|128);
+            StyleCustom();
             ImGui::SetWindowSize(windowSize);
             ImGui::SetWindowPos(ImVec2(window_pos.x/2.0 - windowSize.x/2.0, window_pos.y - windowSize.y/2.0));
 
@@ -233,9 +285,11 @@ int main(void)
 
             // NOTE: %% will write a single % to the stream. Cants use escape character \ for % sign :(
             ImGui::SliderFloat(" ", &percentOfDuration, 0.0f,100.0f,"%.2f %%",16);
-            ImGui::SliderFloat("History", &history, -20.0f, 20.0f);
+            ImGui::SliderFloat("History", &history, 0.0f, 20.0f);
             ImGui::NewLine();
-            ImGui::SameLine(200.0);
+            //TODO: Change position of button
+            //Make it Relative to center of scream center
+            ImGui::SameLine(150.0);
 
             // TODO: Move these up to the main to just initilise them instead of it happening every frame
             // NOTE: Sets the values derived from floats to be 'fixed' meaning no scientific notation
@@ -277,10 +331,10 @@ int main(void)
         index = int(clock.getElapsedTime().asSeconds() * 4800);
 
         const int spacing = 20'000;
-        if (is_playing)
-        {
-            sdata.AddPoint(clock.getElapsedTime().asSeconds() * spacing, buffer.getSamples()[index]);
-        }
+        // if (is_playing)
+        // {
+        //     sdata.AddPoint(clock.getElapsedTime().asSeconds() * spacing, buffer.getSamples()[index]);
+        // }
 
         {
             ImGui::Begin("Spectograph");
@@ -289,11 +343,12 @@ int main(void)
             if (ImPlot::BeginPlot("Spectograph"))
             {
                 // ImPlot::SetupAxes(nullptr, nullptr, ImPlotAxisFlags_NoTickLabels,ImPlotAxisFlags_NoTickLabels );
-                ImPlot::SetupAxes(nullptr, nullptr,ImPlotAxisFlags_NoDecorations,ImPlotAxisFlags_NoDecorations);
-                ImPlot::SetupAxisLimits(ImAxis_X1,( ( clock.getElapsedTime().asSeconds() * spacing ) - ( history * spacing ) ), clock.getElapsedTime().asSeconds() * spacing, ImGuiCond_Always);
-                ImPlot::SetupAxisLimits(ImAxis_Y1,-50'000,50'000,ImGuiCond_Always);
+                // ImPlot::SetupAxes(nullptr, nullptr,ImPlotAxisFlags_NoDecorations,ImPlotAxisFlags_NoDecorations);
+                // ImPlot::SetupAxisLimits(ImAxis_X1,( ( clock.getElapsedTime().asSeconds() * spacing ) - ( history * spacing ) ), clock.getElapsedTime().asSeconds() * spacing, ImGuiCond_Always);
+                // ImPlot::SetupAxisLimits(ImAxis_Y1,-50'000,50'000,ImGuiCond_Always);
                 // ImPlot::SetNextMarkerStyle(ImPlotMarker_Circle);
-                ImPlot::PlotLine("Line",&sdata.Data[0].x,&sdata.Data[0].y,sdata.Data.size(),0,sdata.Offset,2*sizeof(float));
+                // ImPlot::PlotLine("Line",&sdata.Data[0].x,&sdata.Data[0].y,sdata.Data.size(),0,sdata.Offset,2*sizeof(float));
+                ImPlot::PlotLine("Line",xValues,yValues,size);
                 ImPlot::EndPlot();
             }
 
