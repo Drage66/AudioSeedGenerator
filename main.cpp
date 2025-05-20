@@ -16,6 +16,7 @@
 #include <iostream>
 #include <iterator>
 #include <ostream>
+#include <vector>
 
 
 void StyleCustom()
@@ -127,6 +128,38 @@ float floatToMinutes(float secondsAsFloat)
     return durationAsFloatMinutes;
 }
 
+std::vector<float> normalizeSamples(std::vector<float> samples,std::uint32_t size)
+{
+    std::vector<float> r_samples;
+    r_samples.resize(samples.size());
+    // Normalize valuesto plot from -1 to 1
+    float maximum = 0.0;
+    float minimum = 0.0;
+
+    // Get the maximum and minimum values
+    // TODO: Put these into a function
+    for (std::uint32_t i = 0; i < size; i++)
+    {
+        if (samples[i] > maximum)
+        {
+            maximum = samples[i];
+        }
+
+        if (samples[i] < minimum)
+        {
+            minimum = samples[i];
+        }
+    }
+    float range = maximum - minimum;
+
+    for (std::uint32_t i = 0; i < size; i++)
+    {
+        float normalized = -1.0 + (((samples[i] - minimum) * (1.0 - -1.0))/range);
+        r_samples[i] = normalized;
+    }
+    return r_samples;
+}
+
 static void glfw_error_callback(int error, const char* description)
 {
     //HACK: Disabling "Error 65539: Invalid window attribute 0x0002000D" error message that keeps printing for some unknown reason
@@ -179,14 +212,13 @@ int main(void)
     // TODO: Create data points in chunks somehow and plot it to the graph
     // Or increase the Implot maximum values in the source
     // Or truncate the data by skipping some of the ddata in intervals to the limit of the max values
-    int size = 500000;
-    std::int32_t xValues[size];
-    std::int32_t yValues[size];
-    for (std::uint32_t i = 0; i < size; i++)
-    {
-        xValues[i] = i;
-        yValues[i] = buffer.getSamples()[i];
-    }
+    int size = buffer.getSampleCount();
+    std::vector<float> samples;
+    samples.resize(size);
+
+    float sum = 0;
+
+
 
     // Setting volume to 50% becuase my ears are still ringing
     sound.setVolume(5.0);
@@ -331,10 +363,10 @@ int main(void)
         index = int(clock.getElapsedTime().asSeconds() * 4800);
 
         const int spacing = 20'000;
-        // if (is_playing)
-        // {
-        //     sdata.AddPoint(clock.getElapsedTime().asSeconds() * spacing, buffer.getSamples()[index]);
-        // }
+        if (is_playing)
+        {
+            sdata.AddPoint(clock.getElapsedTime().asSeconds() * spacing, buffer.getSamples()[index]);
+        }
 
         {
             ImGui::Begin("Spectograph");
@@ -348,7 +380,9 @@ int main(void)
                 // ImPlot::SetupAxisLimits(ImAxis_Y1,-50'000,50'000,ImGuiCond_Always);
                 // ImPlot::SetNextMarkerStyle(ImPlotMarker_Circle);
                 // ImPlot::PlotLine("Line",&sdata.Data[0].x,&sdata.Data[0].y,sdata.Data.size(),0,sdata.Offset,2*sizeof(float));
-                ImPlot::PlotLine("Line",xValues,yValues,size);
+                // int idx = (int)(m_samples.size());
+                ImPlot::PlotLine("Line",&samples,buffer.getSampleCount(),size);
+                // ImPlot::PlotLine("Line")
                 ImPlot::EndPlot();
             }
 
