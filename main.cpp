@@ -196,69 +196,57 @@ int main(void)
 
     displaySoundInformation(buffer);
 
-    // Print the samples from array bugger.getSamples()
-    // const std::int16_t* samples = buffer.getSamples();
-
-    // int sampleSegment[4800];
-    // for (int i = 0; i < 4800; i++)
-    // {
-    //     sampleSegment[i] = samples[i];
-    //     std::cout << i << ": " << sampleSegment[i] << std::endl;
-    // }
 
 
-    // static int xValues[buffer.getSampleCount];
-    // TODO: Create data points in chunks somehow and plot it to the graph
-    // Or increase the Implot maximum values in the source
-    // Or truncate the data by skipping some of the ddata in intervals to the limit of the max values
-    int n_samples = 4096;
+    //TODO: Create functions to pass buffer to new array and a function to average the arrays
+    //TODO: Store ponts as double to get the averages
+    int n_samples = 512;
     const std::uint64_t size = buffer.getSampleCount(); 
     // int *samples = new int[size];
     const std::int16_t* samples = buffer.getSamples();
-    int points[int(size/n_samples) + 1];
-    int y[int(size/n_samples) + 1];
-    // std::vector<int> samples; // TODO: Test if the problem is vector<float>, try vector<int> and remove the normalise function
-    // std::vector<int> points;
-    // samples.resize(size);
-
-    // for (std::uint64_t i = 0; i < size;i++) 
-    // {
-    //     samples[i] = buffer.getSamples()[i];
-    // }
+    float points[int(size/n_samples) + 1];
+    float x[int(size/n_samples) + 1];
 
 
     int pidx = 0;
+    const int spacing = 20'000;
     for (std::uint64_t i = 0; i < size;) 
     {
-        int sum = 0;
+        float sum = 0;
+        //TODO: This average calc dont seem good. Review and change it if it doesnt actually give a good average
         if(i == size - (size % n_samples))
         {
             for(int j = i; j < i + size % n_samples ; j++)
             {
-                if(samples[j] < 0)
-                    sum += -samples[j];
-                else
-                    sum += samples[j];
+                // if(samples[j] < 0)
+                //     sum += -samples[j];
+                // else
+                //     sum += samples[j];
+                sum += samples[j];
             }
-            int average_point = (sum * 2) / n_samples;
-            points[pidx] = average_point;
+            float average_point = sum/n_samples;
+            // float average_point = (sum * 2) / n_samples;
+            points[pidx] = average_point * spacing;
             // points.push_back(average_point);
         }
         else
         {
             for(int j = i; j < i + n_samples ; j++)
             {
-                if(samples[j] < 0)
-                    sum += -samples[j];
-                else
-                    sum += samples[j];
+                // if(samples[j] < 0)
+                //     sum += -samples[j];
+                // else
+                //     sum += samples[j];
+                sum += samples[j];
             }
-            int average_point = (sum * 2) / n_samples;
-            points[pidx] = average_point;
+            // float average_point = (sum * 2) / n_samples;
+
+            float average_point = sum/n_samples;
+            points[pidx] = average_point * spacing;
             // points.push_back(average_point);
         }
         i += n_samples;
-        y[pidx] = pidx;
+        x[pidx] = pidx * spacing;
         pidx++;
     }
 
@@ -448,7 +436,7 @@ int main(void)
                 // ImPlot::SetNextMarkerStyle(ImPlotMarker_Circle);
                 // ImPlot::PlotLine("Line",&sdata.Data[0].x,&sdata.Data[0].y,sdata.Data.size(),0,sdata.Offset,2*sizeof(float));
                 // int idx = (int)(m_samples.size());
-                ImPlot::PlotLine("Line",y,points,int(size/4096)+1);
+                ImPlot::PlotLine("Line",x,points,int(size/n_samples)+1);
                 // ImPlot::PlotLine("Line")
                 ImPlot::EndPlot();
             }
