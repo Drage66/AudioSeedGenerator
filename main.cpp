@@ -128,7 +128,7 @@ float floatToMinutes(float secondsAsFloat)
     return durationAsFloatMinutes;
 }
 
-std::vector<float> normalizeSamples(std::vector<float> samples,std::uint32_t size)
+std::vector<float> normalizeSamples(std::vector<float> samples,std::uint64_t size)
 {
     std::vector<float> r_samples;
     r_samples.resize(samples.size());
@@ -137,8 +137,7 @@ std::vector<float> normalizeSamples(std::vector<float> samples,std::uint32_t siz
     float minimum = 0.0;
 
     // Get the maximum and minimum values
-    // TODO: Put these into a function
-    for (std::uint32_t i = 0; i < size; i++)
+    for (std::uint64_t i = 0; i < size; i++)
     {
         if (samples[i] > maximum)
         {
@@ -152,7 +151,7 @@ std::vector<float> normalizeSamples(std::vector<float> samples,std::uint32_t siz
     }
     float range = maximum - minimum;
 
-    for (std::uint32_t i = 0; i < size; i++)
+    for (std::uint64_t i = 0; i < size; i++)
     {
         float normalized = -1.0 + (((samples[i] - minimum) * (1.0 - -1.0))/range);
         r_samples[i] = normalized;
@@ -212,11 +211,79 @@ int main(void)
     // TODO: Create data points in chunks somehow and plot it to the graph
     // Or increase the Implot maximum values in the source
     // Or truncate the data by skipping some of the ddata in intervals to the limit of the max values
-    int size = buffer.getSampleCount();
-    std::vector<float> samples;
-    samples.resize(size);
+    int n_samples = 4096;
+    const std::uint64_t size = buffer.getSampleCount(); 
+    // int *samples = new int[size];
+    const std::int16_t* samples = buffer.getSamples();
+    int points[int(size/n_samples) + 1];
+    int y[int(size/n_samples) + 1];
+    // std::vector<int> samples; // TODO: Test if the problem is vector<float>, try vector<int> and remove the normalise function
+    // std::vector<int> points;
+    // samples.resize(size);
 
-    float sum = 0;
+    // for (std::uint64_t i = 0; i < size;i++) 
+    // {
+    //     samples[i] = buffer.getSamples()[i];
+    // }
+
+
+    int pidx = 0;
+    for (std::uint64_t i = 0; i < size;) 
+    {
+        int sum = 0;
+        if(i == size - (size % n_samples))
+        {
+            for(int j = i; j < i + size % n_samples ; j++)
+            {
+                if(samples[j] < 0)
+                    sum += -samples[j];
+                else
+                    sum += samples[j];
+            }
+            int average_point = (sum * 2) / n_samples;
+            points[pidx] = average_point;
+            // points.push_back(average_point);
+        }
+        else
+        {
+            for(int j = i; j < i + n_samples ; j++)
+            {
+                if(samples[j] < 0)
+                    sum += -samples[j];
+                else
+                    sum += samples[j];
+            }
+            int average_point = (sum * 2) / n_samples;
+            points[pidx] = average_point;
+            // points.push_back(average_point);
+        }
+        i += n_samples;
+        y[pidx] = pidx;
+        pidx++;
+    }
+
+    // points = normalizeSamples(samples, points.size());
+    // double y[int(size/n_samples) + 1];
+    // // y.resize(points.size());
+    // // std::cout << points.size() << '\n';
+    // for (int i = 0; i < int(size/n_samples) + 1;i++)
+    // {
+    //     y[i] = i;
+    // }
+
+
+    // for (int i = 0; i < 1024; i++)
+    // {
+    //     for(int j = i; j < i + 1024 ; j++)
+    //     {
+    //         if(samples[j] < 0)
+    //             sum += -samples[j];
+    //         else
+    //             sum += samples[j];
+    //     }
+    // }
+    // float average_point = (sum * 2) / size;
+
 
 
 
@@ -362,11 +429,11 @@ int main(void)
         //TODO: Change 4800 value to use the buffer Samples Per Second
         index = int(clock.getElapsedTime().asSeconds() * 4800);
 
-        const int spacing = 20'000;
-        if (is_playing)
-        {
-            sdata.AddPoint(clock.getElapsedTime().asSeconds() * spacing, buffer.getSamples()[index]);
-        }
+        // const int spacing = 20'000;
+        // if (is_playing)
+        // {
+        //     sdata.AddPoint(clock.getElapsedTime().asSeconds() * spacing, buffer.getSamples()[index]);
+        // }
 
         {
             ImGui::Begin("Spectograph");
@@ -381,7 +448,7 @@ int main(void)
                 // ImPlot::SetNextMarkerStyle(ImPlotMarker_Circle);
                 // ImPlot::PlotLine("Line",&sdata.Data[0].x,&sdata.Data[0].y,sdata.Data.size(),0,sdata.Offset,2*sizeof(float));
                 // int idx = (int)(m_samples.size());
-                ImPlot::PlotLine("Line",&samples,buffer.getSampleCount(),size);
+                ImPlot::PlotLine("Line",y,points,int(size/4096)+1);
                 // ImPlot::PlotLine("Line")
                 ImPlot::EndPlot();
             }
@@ -394,37 +461,37 @@ int main(void)
             ImGui::End();
 
         }
-        ImPlot::ShowDemoWindow();
-        // for (int i = 0; i < index; i++)
-        // {
-        //     std::cout << i << ": " << buffer.getSamples()[i] << std::endl;
-        // }
-
+    //     ImPlot::ShowDemoWindow();
+    //     // for (int i = 0; i < index; i++)
+    //     // {
+    //     //     std::cout << i << ": " << buffer.getSamples()[i] << std::endl;
+    //     // }
+    //
         // ImPlot::ShowDemoWindow();
-
-
-        // {
-        //     // TODO: To Fix
-        //     // Render Spectograph RT
-        //     ImGui::Begin("Spectograph");
-        //     if (ImPlot::BeginPlot("Spectograph"))
-        //     {
-        //         int x_data[bufferFrame];
-        //         int sampleSegment[bufferFrame];
-        //
-        //         for (int i = 0; i < bufferFrame; i++)
-        //         {
-        //             x_data[i] = i;
-        //             sampleSegment[i] = buffer.getSamples()[i];
-        //             std::cout << "i: " << i << '\t' << "samples: " << sampleSegment[i] << std::endl;
-        //             // std::cout << sampleSegment << std::endl;
-        //         }
-        //         ImPlot::PlotLine("Line",x_data,sampleSegment,bufferFrame);
-        //         ImPlot::EndPlot();
-        //     }
-        //     ImGui::End();
-        // }
-
+    //
+    //
+    //     // {
+    //     //     // TODO: To Fix
+    //     //     // Render Spectograph RT
+    //     //     ImGui::Begin("Spectograph");
+    //     //     if (ImPlot::BeginPlot("Spectograph"))
+    //     //     {
+    //     //         int x_data[bufferFrame];
+    //     //         int sampleSegment[bufferFrame];
+    //     //
+    //     //         for (int i = 0; i < bufferFrame; i++)
+    //     //         {
+    //     //             x_data[i] = i;
+    //     //             sampleSegment[i] = buffer.getSamples()[i];
+    //     //             std::cout << "i: " << i << '\t' << "samples: " << sampleSegment[i] << std::endl;
+    //     //             // std::cout << sampleSegment << std::endl;
+    //     //         }
+    //     //         ImPlot::PlotLine("Line",x_data,sampleSegment,bufferFrame);
+    //     //         ImPlot::EndPlot();
+    //     //     }
+    //     //     ImGui::End();
+    //     // }
+    //
         // Rendering
         // (Your code clears your framebuffer, renders your other stuff etc.)
         glViewport(0,0,1280,720);
