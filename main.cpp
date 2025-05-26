@@ -3,6 +3,7 @@
 // HACK: Dont forget to export LD_LIBRARY_PATH=./lib before running exe becuase dynamic linker dont know where to find SFML libraries
 #include <SFML/Audio.hpp>
 #include "imgui.h"
+#include "implot.h"
 #include <cstddef>
 #include <fstream>
 #include <implot.h>
@@ -17,6 +18,7 @@
 #include <iostream>
 #include <iterator>
 #include <ostream>
+#include <string>
 #include <vector>
 
 
@@ -212,6 +214,16 @@ std::vector<ImVec2> averageSamples(const std::int16_t* samples, std::uint64_t sa
     return avg_samples;
 }
 
+const char* timeline_labels(int song_duration, int interval)
+{
+    char* labels = new char[song_duration/interval];
+    for(int i = 0; i < song_duration; i += interval)
+    {
+        labels[i] = floatToMinutes(i);
+    }
+    return labels;
+}
+
 static int window_width = 1280;
 static int window_height = 720;
 
@@ -231,6 +243,8 @@ int main(void)
     sf::Sound sound(buffer);
 
     displaySoundInformation(buffer);
+    int song_duration = buffer.getDuration().asSeconds();
+    int intervals = 15;
 
 
 
@@ -242,35 +256,6 @@ int main(void)
     const std::int16_t* samples = buffer.getSamples();
 
     std::vector<ImVec2> avg_samples = averageSamples(samples, size, n_samples);
-
-
-
-
-
-    // points = normalizeSamples(samples, points.size());
-    // double y[int(size/n_samples) + 1];
-    // // y.resize(points.size());
-    // // std::cout << points.size() << '\n';
-    // for (int i = 0; i < int(size/n_samples) + 1;i++)
-    // {
-    //     y[i] = i;
-    // }
-
-
-    // for (int i = 0; i < 1024; i++)
-    // {
-    //     for(int j = i; j < i + 1024 ; j++)
-    //     {
-    //         if(samples[j] < 0)
-    //             sum += -samples[j];
-    //         else
-    //             sum += samples[j];
-    //     }
-    // }
-    // float average_point = (sum * 2) / size;
-
-
-
 
     // Setting volume to 50% becuase my ears are still ringing
     sound.setVolume(5.0);
@@ -339,11 +324,12 @@ int main(void)
 
         // Populates myimgui frame
         // myimgui.Update();
+        //
         {
 
 
-            ImVec2 windowSize = ImVec2(400,400);
-            ImVec2 button_size = ImVec2(50,50);
+            ImVec2 timeline_window_size = ImVec2(window_width/2.0,window_height * 0.4);
+            ImVec2 timeline_button_size = ImVec2(timeline_window_size.y * 0.2,timeline_window_size.y * 0.2);
 
             // NOTE:
             // Creating an ImGui frame with ImGui::Begin
@@ -351,29 +337,46 @@ int main(void)
             // Parameter 2: a bool to show window close or not... i think
             // Parameter 3: Setting window flags; use | to chain flags
             //              NoTitleBar
-            //              NoResize = 2
             //              NoMove = 4
             //              NoBackground = 128
-            ImGui::Begin("TimeLine",__null,1|2|4|128);
+            //              //HACK: Do not use NoResize, If enabled the WindowSize wont adjust to contents, thus we wont get the window size to center the button
+            //              NoResize = 2
+            ImGui::Begin("TimeLine",__null,1|4|128);
             StyleCustom();
-            ImGui::SetWindowSize(windowSize);
-            ImGui::SetWindowPos(ImVec2(window_pos.x/2.0 - windowSize.x/2.0, window_pos.y - windowSize.y/2.0));
+            ImGui::SetNextWindowSize(ImVec2(timeline_window_size.x,0),ImGuiCond_Always);
+            ImGui::SetNextWindowPos(ImVec2(window_pos.x/2.0 - timeline_window_size.x/2.0, window_pos.y - timeline_window_size.y),ImGuiCond_Always);
+            const char* time_labels[5] = {"0","15","30","40","45"};
+            if (ImPlot::BeginPlot("Spectograph",ImVec2(timeline_window_size.x,timeline_window_size.y * 0.5),ImPlotFlags_CanvasOnly))
+            {
 
-            ImGui::SameLine(250.0);
+                //TODO:Set up axis labels
+                // ImPlot::SetupAxisTicks(ImAxis_X1,0,1,5,time_labels,true);
+                ImPlot::SetupAxes(nullptr, nullptr,ImPlotAxisFlags_AutoFit,ImPlotAxisFlags_AutoFit|ImPlotAxisFlags_NoTickLabels|ImPlotAxisFlags_NoDecorations);
+                ImPlot::PlotLine("Line",&avg_samples[0].x,&avg_samples[0].y,avg_samples.size(),0,0,2*sizeof(float));
+                ImPlot::EndPlot();
+            }
+
+            // ImGui::SameLine(timeline_window_size.x/2.0 - timeline_button_size.x/2.0);
             // TODO: Parse info as a string and then remove the decimal '.' and replace with ':' to display time format
             // Also add if for if the time is less 10 seconds it shows a 0 in front of the values so 02:30 and not 2:30
-            ImGui::Text("%.2f", floatToMinutes(elapsedTimeSeconds));
             // XXX: DO NOT TOUCH SLIDER, we just need it to visualize progress
             // NOTE: Slider Flags:
             //                      AlwaysClamp = 16
 
             // NOTE: %% will write a single % to the stream. Cants use escape character \ for % sign :(
-            ImGui::SliderFloat(" ", &percentOfDuration, 0.0f,100.0f,"%.2f %%",16);
-            ImGui::SliderFloat("History", &history, 0.0f, 20.0f);
-            ImGui::NewLine();
+            // ImGui::Text("%.2f", floatToMinutes(elapsedTimeSeconds)); ImGui::SameLine(); 
+            // ImGui::SetNextItemWidth(timeline_window_size.x);
+            // ImGui::SliderFloat(" ", &percentOfDuration, 0.0f,100.0f,"%.2f %%",16); ImGui::NewLine();
+            // ImGui::Text("%.2f",floatToMinutes(buffer.getDuration().asSeconds() - elapsedTimeSeconds)); ImGui::NewLine();
             //TODO: Change position of button
             //Make it Relative to center of scream center
-            ImGui::SameLine(150.0);
+            
+            ImGui::NewLine();
+            ImGui::NewLine();
+            ImGui::NewLine();
+            ImGui::SameLine(timeline_window_size.x/2.0 - timeline_button_size.x/2.0);
+
+            // ImGui::SameLine(timeline_window_size.x/2.0 - timeline_button_size.x/2.0);
 
             // TODO: Move these up to the main to just initilise them instead of it happening every frame
             // NOTE: Sets the values derived from floats to be 'fixed' meaning no scientific notation
@@ -390,7 +393,7 @@ int main(void)
                 sound.play();
                 clock.start();
 
-                if (ImGui::Button("Pause", button_size))
+                if (ImGui::Button("Pause", timeline_button_size))
                 {
                     is_playing = false;
                 }
@@ -400,7 +403,7 @@ int main(void)
             {
                 sound.pause();
                 clock.stop();
-                if (ImGui::Button("Play", button_size))
+                if (ImGui::Button("Play", timeline_button_size))
                 {
                     is_playing = true;
                 }
@@ -420,66 +423,36 @@ int main(void)
         //     sdata.AddPoint(clock.getElapsedTime().asSeconds() * spacing, buffer.getSamples()[index]);
         // }
 
-        {
-            ImGui::Begin("Spectograph");
+        // {
+        //     ImGui::Begin("Spectograph",nullptr,ImGuiWindowFlags_NoResize|ImGuiWindowFlags_NoTitleBar|ImGuiWindowFlags_NoBackground);
+        //     ImGui::SetWindowSize(ImVec2(200,400));
+        //     ImGui::SetWindowPos(ImVec2(0,0));
+        //     // ImGui::SetWindowPos(ImVec2(window_pos.x/2.0 - windowSize.x/2.0, window_pos.y - windowSize.y/2.0));
+        //
+        //     if (ImPlot::BeginPlot("Spectograph"),ImVec2(-1,-1),ImPlotFlags_CanvasOnly)
+        //     {
+        //         ImPlot::SetupAxes(nullptr, nullptr,ImPlotAxisFlags_AutoFit,ImPlotAxisFlags_AutoFit|ImPlotAxisFlags_NoTickLabels|ImPlotAxisFlags_NoDecorations);
+        //         // ImPlot::SetupAxisLimits(ImAxis_X1,( ( clock.getElapsedTime().asSeconds() * spacing ) - ( history * spacing ) ), clock.getElapsedTime().asSeconds() * spacing, ImGuiCond_Always);
+        //         // ImPlot::SetNextMarkerStyle(ImPlotMarker_Circle);
+        //         // ImPlot::PlotLine("Line",&sdata.Data[0].x,&sdata.Data[0].y,sdata.Data.size(),0,sdata.Offset,2*sizeof(float));
+        //         // int idx = (int)(m_samples.size());
+        //         ImPlot::PlotLine("Line",&avg_samples[0].x,&avg_samples[0].y,avg_samples.size(),0,0,2*sizeof(float));
+        //         // ImPlot::PlotLine("Line")
+        //         ImPlot::EndPlot();
+        //     }
 
+            //TODO: Move these to seperate gui func
+            // ImGui::Text("Time: %f", clock.getElapsedTime().asSeconds());
+            // ImGui::Text("Index: %i", index);
+            // ImGui::Text("Current Data: %i", buffer.getSamples()[index]);
 
-            if (ImPlot::BeginPlot("Spectograph"))
-            {
-                ImPlot::SetupAxes(nullptr, nullptr, ImPlotAxisFlags_NoTickLabels,ImPlotAxisFlags_NoTickLabels );
-                ImPlot::SetupAxes(nullptr, nullptr,ImPlotAxisFlags_NoDecorations,ImPlotAxisFlags_NoDecorations);
-                // ImPlot::SetupAxisLimits(ImAxis_X1,( ( clock.getElapsedTime().asSeconds() * spacing ) - ( history * spacing ) ), clock.getElapsedTime().asSeconds() * spacing, ImGuiCond_Always);
-                // ImPlot::SetupAxisLimits(ImAxis_Y1,-50'000,50'000,ImGuiCond_Always);
-                // ImPlot::SetNextMarkerStyle(ImPlotMarker_Circle);
-                // ImPlot::PlotLine("Line",&sdata.Data[0].x,&sdata.Data[0].y,sdata.Data.size(),0,sdata.Offset,2*sizeof(float));
-                // int idx = (int)(m_samples.size());
-                ImPlot::PlotLine("Line",&avg_samples[0].x,&avg_samples[0].y,avg_samples.size(),0,0,2*sizeof(float));
-                // ImPlot::PlotLine("Line")
-                ImPlot::EndPlot();
-            }
+            // ImGui::End();
 
+        // }
 
-            ImGui::Text("Time: %f", clock.getElapsedTime().asSeconds());
-            ImGui::Text("Index: %i", index);
-            ImGui::Text("Current Data: %i", buffer.getSamples()[index]);
-
-            ImGui::End();
-
-        }
-    //     ImPlot::ShowDemoWindow();
-    //     // for (int i = 0; i < index; i++)
-    //     // {
-    //     //     std::cout << i << ": " << buffer.getSamples()[i] << std::endl;
-    //     // }
-    //
-        // ImPlot::ShowDemoWindow();
-    //
-    //
-    //     // {
-    //     //     // TODO: To Fix
-    //     //     // Render Spectograph RT
-    //     //     ImGui::Begin("Spectograph");
-    //     //     if (ImPlot::BeginPlot("Spectograph"))
-    //     //     {
-    //     //         int x_data[bufferFrame];
-    //     //         int sampleSegment[bufferFrame];
-    //     //
-    //     //         for (int i = 0; i < bufferFrame; i++)
-    //     //         {
-    //     //             x_data[i] = i;
-    //     //             sampleSegment[i] = buffer.getSamples()[i];
-    //     //             std::cout << "i: " << i << '\t' << "samples: " << sampleSegment[i] << std::endl;
-    //     //             // std::cout << sampleSegment << std::endl;
-    //     //         }
-    //     //         ImPlot::PlotLine("Line",x_data,sampleSegment,bufferFrame);
-    //     //         ImPlot::EndPlot();
-    //     //     }
-    //     //     ImGui::End();
-    //     // }
-    //
         // Rendering
         // (Your code clears your framebuffer, renders your other stuff etc.)
-        glViewport(0,0,1280,720);
+        glViewport(0,0,window_width,window_height);
         glClearColor(clear_color.x,clear_color.y,clear_color.z,clear_color.w);
         glClear(GL_COLOR_BUFFER_BIT);
 

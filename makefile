@@ -23,11 +23,11 @@ SOURCES += $(IMPLOT_DIR)/implot.cpp $(IMPLOT_DIR)/implot_items.cpp $(IMPLOT_DIR)
 # Libraries we need to link
 LIB_DIR = ./lib
 LIBS := -L$(LIB_DIR) -lGL -lglfw -lsfml-window -lsfml-graphics -lsfml-system -lsfml-audio
-DebugFlag = -g
+# DebugFlag = -g
 
 # HACK: Dont forget to export LD_LIBRARY_PATH=./lib before running exe becuase dynamic linker dont know where to find SFML libraries
 
 main: main.cpp
-	g++ $(SOURCES) -o $(EXE) $(INCLUDES) $(LIBS) $(DebugFlag)
+	g++ $(SOURCES) -o $(EXE) $(INCLUDES) $(LIBS)
 debug: main
 	@curl http://127.0.0.1:5550/api/runtime/run
