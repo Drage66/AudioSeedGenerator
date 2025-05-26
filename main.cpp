@@ -177,31 +177,39 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
     }
 }
 
-float* averageSamples(std::int16_t* samples, std::uint64_t sample_size, int n_samples)
+std::vector<ImVec2> averageSamples(const std::int16_t* samples, std::uint64_t sample_size, int n_samples)
 {
-    float* points = new float[(sample_size/n_samples)+1];
-    for (std::uint64_t i = 0; i < sample_size;)
+    std::vector<ImVec2> avg_samples;
+    avg_samples.reserve(int((sample_size/n_samples) + 1));
+    int pidx = 0;
+    // const int spacing = 300'000;
+    for (std::uint64_t i = 0; i < sample_size;) 
     {
         float sum = 0;
+        float average_point;
         if(i == sample_size - (sample_size % n_samples))
         {
-            for (int j = i; j < i + sample_size % n_samples; j++)
+            for(int j = i; j < i + sample_size % n_samples ; j++)
             {
                 sum += samples[j];
             }
-            float average_point = sum/n_samples;
+            average_point = sum/n_samples;
+            // points[pidx] = average_point;
         }
-        else 
+        else
         {
-            for (int j = i; j < i + n_samples; j++)
+            for(int j = i; j < i + n_samples ; j++)
             {
                 sum += samples[j];
             }
-            float average_point = sum/n_samples;
+            average_point = sum/n_samples;
         }
+        avg_samples.push_back(ImVec2(pidx,average_point));
         i += n_samples;
+        pidx++;
     }
-    return points;
+
+    return avg_samples;
 }
 
 static int window_width = 1280;
@@ -231,45 +239,12 @@ int main(void)
     //TODO: Store ponts as double to get the averages
     int n_samples = 512;
     const std::uint64_t size = buffer.getSampleCount(); 
-    // int *samples = new int[size];
     const std::int16_t* samples = buffer.getSamples();
-    // float points[int(size/n_samples) + 1];
-    // float x[int(size/n_samples) + 1];
-    std::vector<ImVec2> v_samples;
-    v_samples.reserve(int((size/n_samples) + 1));
-    // v_samples.resize(int((size/n_samples) + 1));
+
+    std::vector<ImVec2> avg_samples = averageSamples(samples, size, n_samples);
 
 
-    int pidx = 0;
-    // const int spacing = 300'000;
-    for (std::uint64_t i = 0; i < size;) 
-    {
-        float sum = 0;
-        float average_point;
-        if(i == size - (size % n_samples))
-        {
-            for(int j = i; j < i + size % n_samples ; j++)
-            {
-                sum += samples[j];
-            }
-            average_point = sum/n_samples;
-            // points[pidx] = average_point;
-        }
-        else
-        {
-            for(int j = i; j < i + n_samples ; j++)
-            {
-                sum += samples[j];
-            }
-            average_point = sum/n_samples;
-            // points[pidx] = average_point;
-        }
-        v_samples.push_back(ImVec2(pidx,average_point));
-        // v_samples[pidx] = ImVec2(pidx,average_point);
-        i += n_samples;
-        // x[pidx] = pidx;
-        pidx++;
-    }
+
 
 
     // points = normalizeSamples(samples, points.size());
@@ -458,7 +433,7 @@ int main(void)
                 // ImPlot::SetNextMarkerStyle(ImPlotMarker_Circle);
                 // ImPlot::PlotLine("Line",&sdata.Data[0].x,&sdata.Data[0].y,sdata.Data.size(),0,sdata.Offset,2*sizeof(float));
                 // int idx = (int)(m_samples.size());
-                ImPlot::PlotLine("Line",&v_samples[0].x,&v_samples[0].y,v_samples.size(),0,0,2*sizeof(float));
+                ImPlot::PlotLine("Line",&avg_samples[0].x,&avg_samples[0].y,avg_samples.size(),0,0,2*sizeof(float));
                 // ImPlot::PlotLine("Line")
                 ImPlot::EndPlot();
             }
