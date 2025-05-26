@@ -1,3 +1,4 @@
+#include "SFML/System/Vector2.hpp"
 #include "UseImGui.h"
 // HACK: Dont forget to export LD_LIBRARY_PATH=./lib before running exe becuase dynamic linker dont know where to find SFML libraries
 #include <SFML/Audio.hpp>
@@ -176,6 +177,33 @@ static void key_callback(GLFWwindow* window, int key, int scancode, int action, 
     }
 }
 
+float* averageSamples(std::int16_t* samples, std::uint64_t sample_size, int n_samples)
+{
+    float* points = new float[(sample_size/n_samples)+1];
+    for (std::uint64_t i = 0; i < sample_size;)
+    {
+        float sum = 0;
+        if(i == sample_size - (sample_size % n_samples))
+        {
+            for (int j = i; j < i + sample_size % n_samples; j++)
+            {
+                sum += samples[j];
+            }
+            float average_point = sum/n_samples;
+        }
+        else 
+        {
+            for (int j = i; j < i + n_samples; j++)
+            {
+                sum += samples[j];
+            }
+            float average_point = sum/n_samples;
+        }
+        i += n_samples;
+    }
+    return points;
+}
+
 static int window_width = 1280;
 static int window_height = 720;
 
@@ -199,56 +227,50 @@ int main(void)
 
 
     //TODO: Create functions to pass buffer to new array and a function to average the arrays
+    //WARN: NVM with that. have to do some weird shit to return arrays in a function. Not in the mood for that
     //TODO: Store ponts as double to get the averages
     int n_samples = 512;
     const std::uint64_t size = buffer.getSampleCount(); 
     // int *samples = new int[size];
     const std::int16_t* samples = buffer.getSamples();
-    float points[int(size/n_samples) + 1];
-    float x[int(size/n_samples) + 1];
+    // float points[int(size/n_samples) + 1];
+    // float x[int(size/n_samples) + 1];
+    std::vector<ImVec2> v_samples;
+    v_samples.reserve(int((size/n_samples) + 1));
+    // v_samples.resize(int((size/n_samples) + 1));
 
 
     int pidx = 0;
-    const int spacing = 20'000;
+    // const int spacing = 300'000;
     for (std::uint64_t i = 0; i < size;) 
     {
         float sum = 0;
-        //TODO: This average calc dont seem good. Review and change it if it doesnt actually give a good average
+        float average_point;
         if(i == size - (size % n_samples))
         {
             for(int j = i; j < i + size % n_samples ; j++)
             {
-                // if(samples[j] < 0)
-                //     sum += -samples[j];
-                // else
-                //     sum += samples[j];
                 sum += samples[j];
             }
-            float average_point = sum/n_samples;
-            // float average_point = (sum * 2) / n_samples;
-            points[pidx] = average_point * spacing;
-            // points.push_back(average_point);
+            average_point = sum/n_samples;
+            // points[pidx] = average_point;
         }
         else
         {
             for(int j = i; j < i + n_samples ; j++)
             {
-                // if(samples[j] < 0)
-                //     sum += -samples[j];
-                // else
-                //     sum += samples[j];
                 sum += samples[j];
             }
-            // float average_point = (sum * 2) / n_samples;
-
-            float average_point = sum/n_samples;
-            points[pidx] = average_point * spacing;
-            // points.push_back(average_point);
+            average_point = sum/n_samples;
+            // points[pidx] = average_point;
         }
+        v_samples.push_back(ImVec2(pidx,average_point));
+        // v_samples[pidx] = ImVec2(pidx,average_point);
         i += n_samples;
-        x[pidx] = pidx * spacing;
+        // x[pidx] = pidx;
         pidx++;
     }
+
 
     // points = normalizeSamples(samples, points.size());
     // double y[int(size/n_samples) + 1];
@@ -429,14 +451,14 @@ int main(void)
 
             if (ImPlot::BeginPlot("Spectograph"))
             {
-                // ImPlot::SetupAxes(nullptr, nullptr, ImPlotAxisFlags_NoTickLabels,ImPlotAxisFlags_NoTickLabels );
-                // ImPlot::SetupAxes(nullptr, nullptr,ImPlotAxisFlags_NoDecorations,ImPlotAxisFlags_NoDecorations);
+                ImPlot::SetupAxes(nullptr, nullptr, ImPlotAxisFlags_NoTickLabels,ImPlotAxisFlags_NoTickLabels );
+                ImPlot::SetupAxes(nullptr, nullptr,ImPlotAxisFlags_NoDecorations,ImPlotAxisFlags_NoDecorations);
                 // ImPlot::SetupAxisLimits(ImAxis_X1,( ( clock.getElapsedTime().asSeconds() * spacing ) - ( history * spacing ) ), clock.getElapsedTime().asSeconds() * spacing, ImGuiCond_Always);
                 // ImPlot::SetupAxisLimits(ImAxis_Y1,-50'000,50'000,ImGuiCond_Always);
                 // ImPlot::SetNextMarkerStyle(ImPlotMarker_Circle);
                 // ImPlot::PlotLine("Line",&sdata.Data[0].x,&sdata.Data[0].y,sdata.Data.size(),0,sdata.Offset,2*sizeof(float));
                 // int idx = (int)(m_samples.size());
-                ImPlot::PlotLine("Line",x,points,int(size/n_samples)+1);
+                ImPlot::PlotLine("Line",&v_samples[0].x,&v_samples[0].y,v_samples.size(),0,0,2*sizeof(float));
                 // ImPlot::PlotLine("Line")
                 ImPlot::EndPlot();
             }
